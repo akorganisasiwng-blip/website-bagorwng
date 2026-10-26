@@ -264,7 +264,9 @@ export default function Page() {
               return (
                 <a
                   className="service-card"
-                  href={item.link || "#kontak"}
+                  href={
+                    item.link ? item.link : `/layanan/${item.slug?.current}`
+                  }
                   key={item._id}
                   target={item.link ? "_blank" : "_self"}
                 >
