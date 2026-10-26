@@ -33,18 +33,19 @@ export default function Page() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Semua Kategori");
   const [page, setPage] = useState(1);
-
-  // State untuk data dari Sanity
   const [dokumenData, setDokumenData] = useState<any[]>([]);
 
   useEffect(() => {
-    // Mengambil data dokumen dari Sanity
-    client.fetch(`*[_type == "dokumen"] | order(tanggal desc)`).then((data) => {
-      setDokumenData(data);
-    });
+    // Query yang benar untuk mengambil URL file dari Sanity
+    client
+      .fetch(
+        `*[_type == "dokumen"] | order(tanggal desc) { ..., "fileUrl": fileDokumen.asset->url, "fileType": fileDokumen.asset->extension }`,
+      )
+      .then((data) => {
+        setDokumenData(data);
+      });
   }, []);
 
-  // Logika Filter
   const filteredDocuments = useMemo(
     () =>
       dokumenData.filter((item) => {
@@ -85,10 +86,7 @@ export default function Page() {
             <div className="mb-6 flex flex-col gap-3 sm:flex-row">
               <label className="relative flex-1">
                 <span className="sr-only">Cari dokumen</span>
-                <Search
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                  aria-hidden="true"
-                />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   value={query}
                   onChange={(event) => {
@@ -96,7 +94,7 @@ export default function Page() {
                     setPage(1);
                   }}
                   placeholder="Cari nama dokumen..."
-                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-[#C41E3A] focus:bg-white focus:ring-2 focus:ring-[#C41E3A]/10"
+                  className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm outline-none transition focus:border-[#C41E3A] focus:bg-white focus:ring-2 focus:ring-[#C41E3A]/10"
                 />
               </label>
               <label className="relative sm:w-56">
@@ -109,15 +107,11 @@ export default function Page() {
                   }}
                   className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 px-4 pr-10 text-sm text-slate-700 outline-none focus:border-[#C41E3A] focus:bg-white"
                 >
-                  <option>{categories[0]}</option>
-                  {categories.slice(1).map((item) => (
+                  {categories.map((item) => (
                     <option key={item}>{item}</option>
                   ))}
                 </select>
-                <ChevronDown
-                  className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                  aria-hidden="true"
-                />
+                <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
               </label>
             </div>
 
@@ -159,13 +153,12 @@ export default function Page() {
                           {item.tanggal || "-"}
                         </td>
                         <td className="px-5 py-4 text-slate-500 uppercase">
-                          {item.fileDokumen?.asset?.extension || "FILE"}
+                          {item.fileType || "FILE"}
                         </td>
                         <td className="px-5 py-4 text-right">
-                          {/* Tombol Unduh Asli */}
-                          {item.fileDokumen?.asset?.url ? (
+                          {item.fileUrl ? (
                             <a
-                              href={item.fileDokumen.asset.url}
+                              href={item.fileUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                             >
@@ -173,14 +166,17 @@ export default function Page() {
                                 size="sm"
                                 className="bg-[#C41E3A] text-white hover:bg-[#8B0000]"
                               >
-                                <Download className="mr-2 h-4 w-4" />
-                                Unduh
+                                <Download className="mr-2 h-4 w-4" /> Unduh
                               </Button>
                             </a>
                           ) : (
-                            <span className="text-xs text-red-500">
-                              File kosong
-                            </span>
+                            <Button
+                              size="sm"
+                              disabled
+                              className="bg-gray-300 text-gray-500 cursor-not-allowed"
+                            >
+                              <Download className="mr-2 h-4 w-4" /> Unduh
+                            </Button>
                           )}
                         </td>
                       </tr>
@@ -199,7 +195,6 @@ export default function Page() {
               </table>
             </div>
 
-            {/* Pagination (Sederhana) */}
             <div className="mt-5 flex flex-col items-center justify-between gap-3 border-t border-slate-100 pt-5 sm:flex-row">
               <p className="text-sm text-slate-500">
                 Menampilkan{" "}
